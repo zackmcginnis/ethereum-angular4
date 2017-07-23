@@ -5,10 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
 //components
-import { AppComponent } from './app.component';
+import { AppComponent } from './components/main/app.component';
 
 //services
-import { BlockchainService } from '../services/blockchain.service';
+import { BlockchainService } from './services/blockchain.service';
 
 @NgModule({
   declarations: [ // components / directives / pipes

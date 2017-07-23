@@ -1,12 +1,6 @@
 import { Component } from '@angular/core';
-// Import the page's CSS. Webpack will know what to do with it.
-import "../stylesheets/app.css";
-
 // Import libraries we need.
-const Web3 = require('web3');
-const contract = require('truffle-contract');
-import { BlockchainService } from './services/blockchain.service';
-const voting_artifacts = require('../../build/contracts/Voting.json');
+import { BlockchainService } from '../../services/blockchain.service';
 
 /*
  * When you compile and deploy your Voting contract,
@@ -19,19 +13,17 @@ const voting_artifacts = require('../../build/contracts/Voting.json');
  */
 
 @Component({
+  moduleId: module.id,
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  //members
 
-  Voting = contract(voting_artifacts);
-  let candidates = {};
-  let tokenPrice = null;
-  web3 : any;
 
   constructor(private BlockchainService: BlockchainService) {
-
+console.log("HELLO")
   }
 
 

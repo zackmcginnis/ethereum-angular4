@@ -1,13 +1,13 @@
 const path = require('path')
 const webpackMerge = require('webpack-merge')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const HtmlPlugin = require('html-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { DefinePlugin, ProgressPlugin, optimize, ContextReplacementPlugin, NormalModuleReplacementPlugin } = require('webpack')
 const { AotPlugin } = require('@ngtools/webpack')
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const TEST_ASSETS = /assets[\/\\].*\.scss$/;
-const OUTPUT_PATH = path.resolve(__dirname, 'build')
+const OUTPUT_PATH = path.resolve(__dirname, 'public')
 const SOURCE_PATH = path.resolve(__dirname, 'src')
 const STATS = {
   colors: true,
@@ -54,7 +54,9 @@ const webpackConfig = {
     extensions: ['.ts', '.js'],
     modules: [
       path.resolve(__dirname, 'node_modules'),
-      SOURCE_PATH
+      //path.resolve(__dirname, 'build')
+      SOURCE_PATH,
+      'build/contracts'
     ],
     symlinks: true
   },
@@ -67,9 +69,11 @@ const webpackConfig = {
     new AotPlugin(getAotOptions()),
     new ProgressPlugin(),
     new ExtractTextPlugin('main.css'),
-    new CopyWebpackPlugin([
-      { from: './src/index.html', to: "index.html" }
-    ]),
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",
+      inject: "body",
+      minify: false
+    }),
     new DefinePlugin({
       'process.env': {
         'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
@@ -105,7 +109,7 @@ const webpackConfig = {
       { test: /\.html$/, loader: 'raw-loader' },
       { test: /\.pug$/, loaders: [
         'html-loader', {
-          loader: 'pug-html-loader',
+          loader: 'html-loader',
           options: {
             doctype: 'html'
           }
@@ -125,9 +129,11 @@ const webpackEnv = {
       main: path.join(SOURCE_PATH, 'main.ts')
     },
     plugins: [
-      new CopyWebpackPlugin([
-        { from: './src/index.html', to: "index.html" }
-      ]),
+      new HtmlWebpackPlugin({
+        template: "./src/index.html",
+        inject: "body",
+        minify: false
+      }),
       new NormalModuleReplacementPlugin(
         /src\/environments\/environment.ts/,
         'environment.production.ts'
@@ -164,9 +170,11 @@ const webpackEnv = {
       main: path.join(SOURCE_PATH, 'main.ts')
     },
     plugins: [
-      new CopyWebpackPlugin([
-        { from: './src/index.html', to: "index.html" }
-      ]),
+      new HtmlWebpackPlugin({
+        template: "./src/index.html",
+        inject: "body",
+        minify: false
+      })
     ],
     devServer: {
       contentBase: OUTPUT_PATH,

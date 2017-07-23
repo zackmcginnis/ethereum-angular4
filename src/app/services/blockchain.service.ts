@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 // Import the page's CSS. Webpack will know what to do with it.
-import "../stylesheets/app.css";
 
 // Import libraries we need.
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-import { BlockchainService } from './services/blockchain.service';
-const voting_artifacts = require('../../build/contracts/Voting.json');
+const voting_artifacts = require('../../../build/contracts/Voting.json');
 /*
  * When you compile and deploy your Voting contract,
  * truffle stores the abi and deployed address in a json
@@ -20,8 +18,8 @@ const voting_artifacts = require('../../build/contracts/Voting.json');
 export class BlockchainService {
 
   Voting = contract(voting_artifacts);
-  let candidates = {};
-  let tokenPrice = null;
+  candidates = {};
+  tokenPrice = null;
   web3: any;
 
   constructor() {
@@ -34,8 +32,9 @@ export class BlockchainService {
       // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
       this.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
     }
+    console.log("this.web3 in constructor = ", this.web3);
 
-    Voting.setProvider(this.web3.currentProvider);
+    this.Voting.setProvider(this.web3.currentProvider);
     this.populateCandidates();
 
  }
@@ -52,9 +51,9 @@ export class BlockchainService {
      * in Truffle returns a promise which is why we have used then()
      * everywhere we have a transaction call
      */
-    Voting.deployed().then( (contractInstance) => {
+    this.Voting.deployed().then( (contractInstance) => {
       contractInstance.voteForCandidate(candidateName, voteTokens, {gas: 140000, from: this.web3.eth.accounts[0]}).then( () => {
-        let div_id = candidates[candidateName];
+        let div_id = this.candidates[candidateName];
         return contractInstance.totalVotesFor.call(candidateName).then( (v) => {
           console.log("vote successful", v)
           //$("#" + div_id).html(v.toString());
@@ -70,9 +69,9 @@ export class BlockchainService {
    */
 
   buyTokens = function(tokensToBuy) {
-    let price = tokensToBuy * tokenPrice;
+    let price = tokensToBuy * this.tokenPrice;
     //$("#buy-msg").html("Purchase order has been submitted. Please wait.");
-    Voting.deployed().then( (contractInstance) => {
+    this.Voting.deployed().then( (contractInstance) => {
       contractInstance.buy({value: this.web3.toWei(price, 'ether'), from: this.web3.eth.accounts[0]}).then( (v) => {
         //$("#buy-msg").html("");
         this.web3.eth.getBalance(contractInstance.address, (error, result) => {
@@ -86,14 +85,14 @@ export class BlockchainService {
 
   lookupVoterInfo = function(address) {
     //let address = $("#voter-info").val();
-    Voting.deployed().then( (contractInstance) => {
+    this.Voting.deployed().then( (contractInstance) => {
       contractInstance.voterDetails.call(address).then( (v) => {
         //$("#tokens-bought").html("Total Tokens bought: " + v[0].toString());
         console.log("tokens bought", v)
         let votesPerCandidate = v[1];
         //$("#votes-cast").empty();
         //$("#votes-cast").append("Votes cast per candidate: <br>");
-        let allCandidates = Object.keys(candidates);
+        let allCandidates = Object.keys(this.candidates);
         for(let i=0; i < allCandidates.length; i++) {
           //$("#votes-cast").append(allCandidates[i] + ": " + votesPerCandidate[i] + "<br>");
         }
@@ -106,14 +105,18 @@ export class BlockchainService {
    * table in the UI with all the candidates and the votes they have received.
    */
   populateCandidates = function () {
-    Voting.deployed().then( (contractInstance) => {
+    this.Voting.deployed().then( (contractInstance) => {
+      console.log("contractInstance response from innitial call of populateCanditdates = ", contractInstance)
       contractInstance.allCandidates.call().then( (candidateArray) => {
+        console.log("response from contractInstance.allCandidates.call() = ", candidateArray);
         for(let i=0; i < candidateArray.length; i++) {
           /* We store the candidate names as bytes32 on the blockchain. We use the
            * handy toUtf8 method to convert from bytes32 to string
            */
-          candidates[this.web3.toUtf8(candidateArray[i])] = "candidate-" + i;
+          this.candidates[this.web3.toUtf8(candidateArray[i])] = "candidate-" + i;
         }
+        console.log("after looping and populating this.candidates[] ", this.candidates)
+        console.log("last part of this function calls, this.setupCandidateRows(), this.populateCandidateVotes(); this.populateTokenData()");
         this.setupCandidateRows();
         this.populateCandidateVotes();
         this.populateTokenData();
@@ -122,10 +125,10 @@ export class BlockchainService {
   };
 
   populateCandidateVotes = function () {
-    let candidateNames = Object.keys(candidates);
+    let candidateNames = Object.keys(this.candidates);
     for (var i = 0; i < candidateNames.length; i++) {
       let name = candidateNames[i];
-      Voting.deployed().then( (contractInstance) => {
+      this.Voting.deployed().then( (contractInstance) => {
         contractInstance.totalVotesFor.call(name).then( (v) => {
           console.log("total votes for", v);
           //$("#" + candidates[name]).html(v.toString());
@@ -135,7 +138,7 @@ export class BlockchainService {
   }
 
   setupCandidateRows = function () {
-    Object.keys(candidates).forEach( (candidate) => {
+    Object.keys(this.candidates).forEach( (candidate) => {
       //$("#candidate-rows").append("<tr><td>" + candidate + "</td><td id='" + candidates[candidate] + "'></td></tr>");
     });
   }
@@ -144,7 +147,7 @@ export class BlockchainService {
    * each token and display in the UI
    */
   populateTokenData = function () {
-    Voting.deployed().then( (contractInstance) => {
+    this.Voting.deployed().then( (contractInstance) => {
       contractInstance.totalTokens().then( (v) => {
         console.log("total tokens", v)
         //$("#tokens-total").html(v.toString());
@@ -154,7 +157,7 @@ export class BlockchainService {
         //$("#tokens-sold").html(v.toString());
       });
       contractInstance.tokenPrice().then( (v) => {
-        tokenPrice = parseFloat(this.web3.fromWei(v.toString()));
+        this.tokenPrice = parseFloat(this.web3.fromWei(v.toString()));
         console.log("total cost", v)
         //$("#token-cost").html(tokenPrice + " Ether");
       });
